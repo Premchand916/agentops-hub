@@ -1,0 +1,5 @@
+Metadata-Version: 2.4
+Name: agentops-hub
+Version: 0.1.0
+Summary: Multi-agent AI operations assistant
+Requires-Python: >=3.12

@@ -27,6 +27,7 @@ A: "I use a centralized settings module with pydantic-settings. It reads
 """
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from pydantic import Field
 
 
@@ -58,12 +59,14 @@ class Settings(BaseSettings):
         description="Google Gemini API key"
     )
     gemini_model: str = Field(
-        default="gemini-2.0-flash",
+        default="gemini-3-flash-preview",
         description="Which Gemini model to use. Flash for dev, Pro for production."
     )
     embedding_model: str = Field(
-        default="models/text-embedding-004",
-        description="Google embedding model for RAG vectors"
+        default="models/gemini-embedding-2-preview",
+        description="Google embedding model for RAG vectors",
+        client_options={"api_endpoint": "generativelanguage.googleapis.com"},
+        transport="rest"
     )
     
     # =====================
