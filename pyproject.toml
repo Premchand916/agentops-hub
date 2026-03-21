@@ -9,4 +9,5 @@ description = "Multi-agent AI operations assistant"
 requires-python = ">=3.12"
 
 [tool.setuptools.packages.find]
-include = ["agents*", "rag*", "mcp_servers*", "evals*", "observability*", "app*", "config*", "scripts*"]
+# Open pyproject.toml and change the include line to:
+include = ["agents*", "rag*", "mcp_servers*", "evals*", "observability*", "app*", "config*", "scripts*", "tools*"]
