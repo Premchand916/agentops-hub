@@ -1,67 +1,55 @@
 """
-AgentOps Hub — Interactive CLI
-=================================
+AgentOps Hub — Interactive CLI (Multi-Agent Version)
+======================================================
 
-This is the "front door" of our application.
-Run it and ask questions about company docs.
+WHAT CHANGED FROM SESSION 1:
+Before: User → RAG → Answer
+Now:    User → Orchestrator → Specialist Agent → RAG → Answer
 
-HOW TO RUN:
-    python app/cli.py
-
-WHAT HAPPENS:
-1. Loads and indexes all documents (one-time)
-2. Starts an interactive loop
-3. You type questions, it returns RAG-grounded answers with sources
-
-WHY A CLI FIRST (not a web UI)?
-In professional AI engineering, you ALWAYS start with a CLI.
-Reasons:
-1. Fastest to build — no HTML, no CSS, no JavaScript
-2. Easiest to debug — you see everything in the terminal
-3. Easy to automate — pipe queries from a file for batch testing
-4. The UI is separate from the brain — we'll add Slack/web UI later
-   without changing ANY of the RAG or agent code
-
-This is the separation of concerns principle in action.
-The CLI is just one "skin" over the same engine.
+The user experience is the same (type question, get answer),
+but behind the scenes, an orchestrator decides which specialist
+handles the request. The CLI now also shows WHICH agent handled
+the query — important for debugging and building trust.
 """
 
 import sys
 import os
 
-# Add project root to Python path so imports work
-# WHY: When you run "python app/cli.py", Python looks for modules
-# starting from the "app/" directory. But our modules are in the
-# project root. This line tells Python to also look in the root.
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import logging
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("google_genai.models").setLevel(logging.WARNING)
 
 from rich import print as rprint
 from rich.panel import Panel
 from rich.prompt import Prompt
-from rag.rag_chain import RAGChain
+from agents.graph import AgentHub
 
 
 def print_banner():
     """Print the application banner."""
     rprint(Panel.fit(
-        "[bold cyan]🏥 AgentOps Hub — Knowledge Assistant[/bold cyan]\n\n"
-        "Ask questions about company IT, policies, and procedures.\n"
-        "Type [bold]'quit'[/bold] or [bold]'exit'[/bold] to stop.\n"
-        "Type [bold]'stats'[/bold] to see knowledge base info.",
+        "[bold cyan]🏥 AgentOps Hub — Multi-Agent Operations Assistant[/bold cyan]\n\n"
+        "Ask questions about IT support, company policies, or procedures.\n"
+        "The system automatically routes to the right specialist agent.\n\n"
+        "Commands:\n"
+        "  [bold]quit[/bold] / [bold]exit[/bold]  — Stop the application\n"
+        "  [bold]stats[/bold]       — Show knowledge base info",
         title="Welcome",
         border_style="cyan",
     ))
 
 
 def main():
-    """Main CLI loop."""
+    """Main CLI loop with multi-agent routing."""
     print_banner()
     
-    # --- Initialize and ingest ---
-    rprint("\n[bold]🔧 Initializing RAG pipeline...[/bold]\n")
+    # --- Initialize ---
+    rprint("\n[bold]🔧 Initializing multi-agent system...[/bold]\n")
     
     try:
-        rag = RAGChain()
+        hub = AgentHub()
     except Exception as e:
         rprint(f"[red]❌ Failed to initialize: {e}[/red]")
         rprint("[yellow]Check that your .env file has a valid GOOGLE_API_KEY[/yellow]")
@@ -69,32 +57,30 @@ def main():
     
     # Ingest documents
     documents_path = "rag/documents"
-    rprint(f"[bold]📥 Loading knowledge base from: {documents_path}[/bold]\n")
     
     try:
-        stats = rag.ingest(documents_path)
+        stats = hub.ingest(documents_path)
         if stats["status"] != "success":
-            rprint("[red]❌ Ingestion failed. Check your documents folder.[/red]")
+            rprint("[red]❌ Ingestion failed.[/red]")
             sys.exit(1)
     except Exception as e:
         rprint(f"[red]❌ Ingestion error: {e}[/red]")
         sys.exit(1)
     
     # --- Interactive loop ---
-    rprint("[bold green]✅ Ready! Ask me anything about the knowledge base.\n[/bold green]")
+    rprint("\n[bold green]✅ Ready! Ask me anything.\n[/bold green]")
     
     while True:
         try:
-            # Get user input
             question = Prompt.ask("\n[bold]You[/bold]")
             
-            # Handle special commands
+            # Handle commands
             if question.lower() in ("quit", "exit", "q"):
                 rprint("[cyan]👋 Goodbye![/cyan]")
                 break
             
             if question.lower() == "stats":
-                info = rag.vector_store.get_collection_info()
+                info = hub.rag_chain.vector_store.get_collection_info()
                 rprint(Panel.fit(
                     f"Collection: {info.get('name', 'N/A')}\n"
                     f"Vectors: {info.get('vectors_count', 'N/A')}\n"
@@ -106,8 +92,37 @@ def main():
             if not question.strip():
                 continue
             
-            # Query the RAG system
-            result = rag.query(question)
+            # --- Route through multi-agent system ---
+            result = hub.chat(question)
+            
+            # Display answer
+            rprint(f"\n[bold green]💬 Answer:[/bold green]")
+            rprint(result["answer"])
+            
+            # Show which agent handled it
+            agent_name = result.get("handled_by", "UNKNOWN")
+            confidence = result.get("routing", {}).get("confidence", 0)
+            
+            agent_colors = {
+                "IT_HELP": "green",
+                "KNOWLEDGE": "blue",
+                "TRIAGE": "yellow",
+                "WORKFLOW": "magenta",
+            }
+            color = agent_colors.get(agent_name, "white")
+            
+            rprint(f"\n[{color}]🏷️  Handled by: {agent_name} "
+                   f"(routing confidence: {confidence:.0%})[/{color}]")
+            
+            # Show sources if available
+            sources = result.get("sources", [])
+            if sources:
+                rprint(f"[dim]📚 Sources:[/dim]")
+                for s in sources:
+                    score = s.get("rerank_score", 0)
+                    if score > 0:
+                        rprint(f"[dim]  • {s.get('file', 'unknown')} "
+                               f"(relevance: {score:.3f})[/dim]")
             
         except KeyboardInterrupt:
             rprint("\n[cyan]👋 Goodbye![/cyan]")
