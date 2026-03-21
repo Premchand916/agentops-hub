@@ -31,6 +31,7 @@ A: "The query first goes through hybrid retrieval — dense vector search
 """
 
 import yaml
+import logging
 from pathlib import Path
 from langchain_google_genai import ChatGoogleGenerativeAI
 from config.settings import get_settings
@@ -41,7 +42,9 @@ from rag.bm25_index import BM25Index
 from rag.retriever import HybridRetriever
 from rag.reranker import Reranker
 from rich import print as rprint
-
+# Suppress noisy HTTP request logs
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("google_genai.models").setLevel(logging.WARNING)
 
 class RAGChain:
     """
@@ -187,7 +190,16 @@ class RAGChain:
         )
         
         response = self.llm.invoke(prompt)
-        answer = response.content
+        response = self.llm.invoke(prompt)
+        # Handle both string and list response formats from Gemini
+        if isinstance(response.content, list):
+            # Gemini sometimes returns list of content blocks
+            answer = "\n".join(
+                block.get("text", "") if isinstance(block, dict) else str(block)
+                for block in response.content
+            )
+        else:
+            answer = response.content
         
         # Collect sources for citation
         sources = []
