@@ -1,0 +1,17 @@
+python-dotenv
+pydantic
+pydantic-settings
+rich
+langchain-core
+langchain
+langgraph
+langchain-google-genai
+langchain-community
+langchain-text-splitters
+qdrant-client
+rank-bm25
+flashrank
+pymupdf
+python-docx
+beautifulsoup4
+markdown
