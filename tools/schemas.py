@@ -1,5 +1,5 @@
-"""
-Tool Schemas — Pydantic models defining inputs and outputs for all agent tools.
+﻿"""
+Tool Schemas  Pydantic models defining inputs and outputs for all agent tools.
 
 Think of these as "contracts" between agents and tools:
 - Input schemas = "What info does the tool need?"
@@ -18,9 +18,9 @@ from typing import Optional
 from pydantic import BaseModel, Field
 
 
-# ──────────────────────────────────────────────
-# Enums — constrained choices (the LLM picks from these)
-# ──────────────────────────────────────────────
+# 
+# Enums  constrained choices (the LLM picks from these)
+# 
 
 class TicketPriority(str, Enum):
     """Priority levels for support tickets.
@@ -57,14 +57,14 @@ class NotificationChannel(str, Enum):
     TEAMS = "teams"
 
 
-# ──────────────────────────────────────────────
-# Tool Input Schemas — what the agent must provide
-# ──────────────────────────────────────────────
+# 
+# Tool Input Schemas  what the agent must provide
+# 
 
 class CreateTicketInput(BaseModel):
     """Input schema for creating a support ticket.
     
-    Field descriptions are critical — they become part of the JSON Schema
+    Field descriptions are critical  they become part of the JSON Schema
     that the LLM reads to understand what each parameter means.
     """
     title: str = Field(
@@ -142,9 +142,9 @@ class SendNotificationInput(BaseModel):
     )
 
 
-# ──────────────────────────────────────────────
-# Tool Output Schemas — what the tool returns
-# ──────────────────────────────────────────────
+# 
+# Tool Output Schemas  what the tool returns
+# 
 
 class TicketResult(BaseModel):
     """Output from creating or retrieving a ticket."""
@@ -189,14 +189,14 @@ class NotificationResult(BaseModel):
     sent_at: datetime
 
 
-# ──────────────────────────────────────────────
-# Tool Metadata — used by the tool registry (Step 3)
-# ──────────────────────────────────────────────
+# 
+# Tool Metadata  used by the tool registry (Step 3)
+# 
 
 class ToolDefinition(BaseModel):
     """Describes a tool for the registry and LLM function calling.
     
-    This is the "menu item" — name, description, and what
+    This is the "menu item"  name, description, and what
     input schema it expects. The LLM reads this to decide
     which tool to call and how to fill the arguments.
     """
@@ -205,7 +205,7 @@ class ToolDefinition(BaseModel):
     input_schema: type[BaseModel] = Field(
         description="Pydantic model class for input validation"
     )
-    # We store the class itself, not an instance — we'll use it
+    # We store the class itself, not an instance  we'll use it
     # to validate inputs and generate JSON Schema for the LLM.
 
     class Config:

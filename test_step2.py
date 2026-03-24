@@ -1,4 +1,4 @@
-"""Step 2 — Tool Registry & Executor test."""
+﻿"""Step 2 â€” Tool Registry & Executor test."""
 
 import json
 from tools.backends import BackendServices
@@ -12,7 +12,7 @@ registry = ToolRegistry(backends)
 tools = registry.get_tool_names()
 print(f"[OK] Registered {len(tools)} tools: {tools}")
 
-# Test 2: Get schema for LLM (what Gemini sees for function calling)
+# Test 2: Get schema for the LLM tool-calling prompt
 schema = registry.get_tool_schema("create_ticket")
 print(f"[OK] create_ticket schema has keys: {list(schema.keys())}")
 
@@ -27,7 +27,7 @@ result = registry.execute_tool_safe("create_ticket", {
     "priority": "high",
     "tags": ["hardware", "monitor"],
 })
-print(f"[OK] Tool executed: {result['success']} — ticket {result['result']['ticket_id']}")
+print(f"[OK] Tool executed: {result['success']} â€” ticket {result['result']['ticket_id']}")
 
 # Test 5: Execute tool with bad arguments (validation should catch it)
 result = registry.execute_tool_safe("create_ticket", {
@@ -69,3 +69,4 @@ print(f"[OK] Prompt format generated: {len(prompt_text)} chars, mentions tools: 
 
 print()
 print("=== All 10 tests passed! Step 2 complete. ===")
+

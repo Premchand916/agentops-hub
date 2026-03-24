@@ -7,7 +7,24 @@ name = "agentops-hub"
 version = "0.1.0"
 description = "Multi-agent AI operations assistant"
 requires-python = ">=3.12"
+dependencies = [
+    "beautifulsoup4",
+    "flashrank",
+    "langchain-core",
+    "langchain-ollama",
+    "langgraph",
+    "pydantic",
+    "pydantic-settings",
+    "pymupdf",
+    "python-docx",
+    "python-dotenv",
+    "qdrant-client",
+    "rank-bm25",
+    "rich",
+]
+
+[project.scripts]
+agentops-hub = "app.cli:main"
 
 [tool.setuptools.packages.find]
-# Open pyproject.toml and change the include line to:
 include = ["agents*", "rag*", "mcp_servers*", "evals*", "observability*", "app*", "config*", "scripts*", "tools*"]

@@ -1,5 +1,5 @@
-"""
-AgentOps Hub — Agent Graph (Updated with Workflow Agent)
+﻿"""
+AgentOps Hub  Agent Graph (Updated with Workflow Agent)
 ==========================================================
 
 WHAT CHANGED FROM SESSION 2:
@@ -11,16 +11,16 @@ WHAT CHANGED FROM SESSION 2:
 The graph now looks like:
 
     START
-      │
-      ▼
-  orchestrator  ← classifies intent
-      │
-      ├── "IT_HELP"    → it_help_agent
-      ├── "KNOWLEDGE"  → knowledge_agent
-      ├── "WORKFLOW"   → workflow_agent  ← NEW
-      ├── "TRIAGE"     → triage_agent
-      │
-      ▼
+      
+      
+  orchestrator   classifies intent
+      
+       "IT_HELP"     it_help_agent
+       "KNOWLEDGE"   knowledge_agent
+       "WORKFLOW"    workflow_agent   NEW
+       "TRIAGE"      triage_agent
+      
+      
      END
 """
 
@@ -55,7 +55,7 @@ def build_agent_graph(
     it_help = ITHelpAgent(rag_chain)
     knowledge = KnowledgeAgent(rag_chain)
     triage = TriageAgent(rag_chain)
-    workflow = WorkflowAgent(tool_registry)  # NEW — uses tools, not RAG
+    workflow = WorkflowAgent(tool_registry)  # NEW  uses tools, not RAG
     
     # Create graph
     graph = StateGraph(AgentState)
@@ -70,7 +70,7 @@ def build_agent_graph(
     # Entry point
     graph.set_entry_point("orchestrator")
     
-    # Conditional routing — now includes WORKFLOW
+    # Conditional routing  now includes WORKFLOW
     graph.add_conditional_edges(
         "orchestrator",
         route_to_specialist,
@@ -89,24 +89,24 @@ def build_agent_graph(
     graph.add_edge("workflow", END)  # NEW
     
     compiled = graph.compile()
-    rprint("[green]✅ Agent graph compiled (4 specialist agents)[/green]")
+    rprint("[green] Agent graph compiled (4 specialist agents)[/green]")
     
     return compiled
 
 
 def route_to_specialist(state: AgentState) -> str:
-    """Conditional routing function — reads target_agent from state."""
+    """Conditional routing function  reads target_agent from state."""
     target = state.get("target_agent", "TRIAGE")
     
     # Safety: prevent infinite loops
     if state.get("routing_attempts", 0) > 3:
-        rprint("[red]  ⚠️  Max routing attempts → forcing TRIAGE[/red]")
+        rprint("[red]    Max routing attempts  forcing TRIAGE[/red]")
         return "TRIAGE"
     
     valid_agents = {"IT_HELP", "KNOWLEDGE", "TRIAGE", "WORKFLOW"}
     
     if target not in valid_agents:
-        rprint(f"[yellow]  ⚠️  Unknown agent '{target}' → TRIAGE[/yellow]")
+        rprint(f"[yellow]    Unknown agent '{target}'  TRIAGE[/yellow]")
         return "TRIAGE"
     
     return target
@@ -123,7 +123,7 @@ class AgentHub:
     """
     
     def __init__(self):
-        rprint("[bold]🏥 Initializing AgentOps Hub...[/bold]")
+        rprint("[bold] Initializing AgentOps Hub...[/bold]")
         
         # RAG for knowledge retrieval
         self.rag_chain = RAGChain()
@@ -172,7 +172,7 @@ class AgentHub:
         try:
             final_state = self.graph.invoke(initial_state)
         except Exception as e:
-            rprint(f"[red]❌ Agent graph error: {e}[/red]")
+            rprint(f"[red] Agent graph error: {e}[/red]")
             return {
                 "answer": "I encountered an error processing your request. Please try again.",
                 "handled_by": "ERROR",

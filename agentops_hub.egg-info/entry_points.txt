@@ -1,0 +1,2 @@
+[console_scripts]
+agentops-hub = app.cli:main

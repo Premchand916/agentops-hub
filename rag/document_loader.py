@@ -1,5 +1,5 @@
-"""
-AgentOps Hub — Document Loader
+﻿"""
+AgentOps Hub  Document Loader
 ================================
 
 WHAT THIS DOES:
@@ -18,16 +18,16 @@ and put them all into the same electronic format. That's the loader.
 DESIGN DECISIONS (why I built it this way):
 
 1. WHY return a list of Documents (not raw strings)?
-   → Because metadata matters. When the RAG system cites a source,
+    Because metadata matters. When the RAG system cites a source,
      it needs to know WHICH document the chunk came from, WHICH page,
      and WHAT type of document it was. Raw strings lose all that.
 
 2. WHY a factory pattern (get loader by file extension)?
-   → So adding a new file type = adding one function. You don't touch
+    So adding a new file type = adding one function. You don't touch
      existing code. This is the Open/Closed Principle (SOLID).
 
 3. WHY load ALL files from a directory at once?
-   → In production, you ingest a whole knowledge base, not one file.
+    In production, you ingest a whole knowledge base, not one file.
      Batch loading with proper error handling per file is essential.
 
 INTERVIEW TIP:
@@ -35,7 +35,7 @@ Q: "How would you design a document ingestion pipeline?"
 A: "I separate loading from processing. The loader handles format-specific
    parsing (PDF, DOCX, etc.) and returns a uniform Document object with
    text and metadata. This makes the rest of the pipeline format-agnostic.
-   Adding a new format means adding one loader function — nothing else changes."
+   Adding a new format means adding one loader function  nothing else changes."
 """
 
 import os
@@ -46,14 +46,14 @@ from rich import print as rprint
 
 
 # ============================================================
-# Document dataclass — our universal format
+# Document dataclass  our universal format
 # ============================================================
 # DATACLASS EXPLAINED:
 # A dataclass is Python's way of creating a "data container" without
 # writing __init__, __repr__, etc. It's like a struct in C.
 #
 # WHY NOT a dictionary?
-# → Dictionaries have no type checking. doc["content"] could be
+#  Dictionaries have no type checking. doc["content"] could be
 #   anything. With a dataclass, doc.content is always a string.
 #   Your IDE gives you autocomplete and catches typos.
 # ============================================================
@@ -64,7 +64,7 @@ class Document:
     A single document loaded from a file.
     
     This is the universal format that flows through our entire pipeline:
-    Loader → Chunker → Embedder → Vector Store → Retriever
+    Loader  Chunker  Embedder  Vector Store  Retriever
     
     Every component speaks this common language.
     """
@@ -84,7 +84,7 @@ def load_markdown(file_path: str) -> list[Document]:
     """
     Load a Markdown file.
     
-    WHY MARKDOWN FIRST: It's the simplest format — just text.
+    WHY MARKDOWN FIRST: It's the simplest format  just text.
     Our sample documents are all Markdown. Perfect for development.
     In production, most internal wikis (Notion, Confluence) export as MD.
     """
@@ -126,9 +126,9 @@ def load_pdf(file_path: str) -> list[Document]:
     Load a PDF file using PyMuPDF.
     
     WHY PyMuPDF (not PyPDF2 or pdfplumber)?
-    → PyMuPDF is the fastest PDF parser in Python (10x faster than PyPDF2).
-    → It handles complex PDFs (multi-column, tables) better.
-    → It's the industry standard for production RAG systems.
+     PyMuPDF is the fastest PDF parser in Python (10x faster than PyPDF2).
+     It handles complex PDFs (multi-column, tables) better.
+     It's the industry standard for production RAG systems.
     
     NOTE: Returns ONE Document per PAGE. This is important because:
     1. We can track which PAGE an answer came from
@@ -163,7 +163,7 @@ def load_docx(file_path: str) -> list[Document]:
     """
     Load a Word document (.docx).
     
-    WHY: Many company docs are in Word format — policies, procedures,
+    WHY: Many company docs are in Word format  policies, procedures,
     contracts, reports. This is non-negotiable for enterprise RAG.
     """
     from docx import Document as DocxDocument
@@ -221,7 +221,7 @@ def load_html(file_path: str) -> list[Document]:
 
 
 # ============================================================
-# Loader registry — maps file extensions to loader functions
+# Loader registry  maps file extensions to loader functions
 # ============================================================
 # This is a simple FACTORY PATTERN:
 # Instead of a giant if/elif chain, we map extensions to functions.
@@ -302,21 +302,21 @@ def load_directory(directory_path: str) -> list[Document]:
     ]
     
     if not files:
-        rprint(f"[yellow]⚠️  No supported documents found in {directory_path}[/yellow]")
+        rprint(f"[yellow]  No supported documents found in {directory_path}[/yellow]")
         return []
     
-    rprint(f"[cyan]📁 Found {len(files)} documents to load[/cyan]")
+    rprint(f"[cyan] Found {len(files)} documents to load[/cyan]")
     
     for file_path in sorted(files):
         try:
             docs = load_document(str(file_path))
             all_documents.extend(docs)
-            rprint(f"  [green]✅ Loaded: {file_path.name} ({len(docs)} doc(s))[/green]")
+            rprint(f"  [green] Loaded: {file_path.name} ({len(docs)} doc(s))[/green]")
         except Exception as e:
-            # Log error but continue — don't let one bad file crash everything
-            rprint(f"  [red]❌ Failed: {file_path.name} — {e}[/red]")
+            # Log error but continue  don't let one bad file crash everything
+            rprint(f"  [red] Failed: {file_path.name}  {e}[/red]")
     
-    rprint(f"[cyan]📄 Total documents loaded: {len(all_documents)}[/cyan]")
+    rprint(f"[cyan] Total documents loaded: {len(all_documents)}[/cyan]")
     return all_documents
 
 
@@ -342,13 +342,13 @@ if __name__ == "__main__":
     # Default to our sample documents directory
     doc_dir = sys.argv[1] if len(sys.argv) > 1 else "rag/documents"
     
-    rprint(f"\n[bold]🔍 Testing Document Loader[/bold]")
+    rprint(f"\n[bold] Testing Document Loader[/bold]")
     rprint(f"   Directory: {doc_dir}\n")
     
     docs = load_directory(doc_dir)
     
     if docs:
-        rprint(f"\n[bold]📋 Sample output (first document):[/bold]")
+        rprint(f"\n[bold] Sample output (first document):[/bold]")
         rprint(f"   Title:    {docs[0].metadata.get('title', 'N/A')}")
         rprint(f"   Source:   {docs[0].metadata.get('file_name', 'N/A')}")
         rprint(f"   Type:     {docs[0].metadata.get('file_type', 'N/A')}")

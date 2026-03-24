@@ -1,5 +1,5 @@
-"""
-AgentOps Hub — Reranker
+﻿"""
+AgentOps Hub  Reranker
 =========================
 
 WHAT THIS DOES:
@@ -9,8 +9,8 @@ using a more accurate (but slower) model to find the truly best matches.
 WHY RERANKING IS NECESSARY:
 
 Think of it like a job hiring process:
-1. RETRIEVAL (resume screening) → Quick scan, pull 20 candidates → fast but rough
-2. RERANKING (phone interview)  → Carefully evaluate top 20, pick best 5 → slower but accurate
+1. RETRIEVAL (resume screening)  Quick scan, pull 20 candidates  fast but rough
+2. RERANKING (phone interview)   Carefully evaluate top 20, pick best 5  slower but accurate
 
 Without reranking: The LLM gets 20 chunks, many of which are mediocre.
 With reranking:    The LLM gets the 5 BEST chunks. Much better answers.
@@ -28,7 +28,7 @@ Reranking (cross-encoder):
   - More accurate: because it can see the relationship between query and document
 
 That's why we use retrieval first (fast, broad) then reranking (slow, precise).
-You can't rerank millions of documents — too slow. But reranking 20? Easy.
+You can't rerank millions of documents  too slow. But reranking 20? Easy.
 
 WHY FLASHRANK (not Cohere Rerank or sentence-transformers)?
 - FlashRank: No PyTorch needed (~2GB saved), runs on CPU, free, good quality
@@ -39,7 +39,7 @@ switch to Cohere Rerank for better quality.
 
 INTERVIEW TIP:
 Q: "Why not just use the reranker for everything instead of vector search?"
-A: "Rerankers are cross-encoders — they process query-document pairs together.
+A: "Rerankers are cross-encoders  they process query-document pairs together.
    For 1 million documents, that's 1 million forward passes through a neural
    network. That would take minutes or hours. Vector search takes milliseconds
    because it pre-computes document embeddings. So we use vector search to
@@ -58,7 +58,7 @@ class Reranker:
     USAGE:
         reranker = Reranker()
         reranked = reranker.rerank(query, retrieved_chunks)
-        # reranked is sorted by relevance — best first
+        # reranked is sorted by relevance  best first
     """
     
     def __init__(self, model_name: str = "ms-marco-MiniLM-L-12-v2"):
@@ -72,7 +72,7 @@ class Reranker:
         
         The first call will download the model. Subsequent calls use cache.
         """
-        rprint(f"[dim]📊 Loading reranker model: {model_name}[/dim]")
+        rprint(f"[dim] Loading reranker model: {model_name}[/dim]")
         self.ranker = Ranker(model_name=model_name, cache_dir="model_cache")
         self.settings = get_settings()
     
@@ -125,7 +125,7 @@ class Reranker:
             original_result["rerank_score"] = item["score"]
             reranked_results.append(original_result)
         
-        rprint(f"[dim]  📊 Reranked {len(results)} → kept top {len(reranked_results)}[/dim]")
+        rprint(f"[dim]   Reranked {len(results)}  kept top {len(reranked_results)}[/dim]")
         
         return reranked_results
 
@@ -134,7 +134,7 @@ class Reranker:
 # Self-test
 # ============================================================
 if __name__ == "__main__":
-    rprint("\n[bold]📊 Testing Reranker[/bold]\n")
+    rprint("\n[bold] Testing Reranker[/bold]\n")
     
     reranker = Reranker()
     
@@ -154,3 +154,4 @@ if __name__ == "__main__":
         rprint(f"  [yellow]#{i}[/yellow] (score: {r['rerank_score']:.4f})")
         rprint(f"  Content: {r['content']}")
         rprint()
+

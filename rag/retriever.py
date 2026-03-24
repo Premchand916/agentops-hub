@@ -1,5 +1,5 @@
-"""
-AgentOps Hub — Hybrid Retriever
+﻿"""
+AgentOps Hub  Hybrid Retriever
 ==================================
 
 WHAT THIS DOES:
@@ -11,8 +11,8 @@ WHY NOT JUST PICK THE BEST ONE?
 Think of it like a doctor getting a SECOND OPINION:
 - Doctor A (vector search) says: "These 5 medical records are relevant"
 - Doctor B (BM25) says: "These 5 medical records are relevant"
-- Some records appear in BOTH lists → very likely relevant (boost them!)
-- Some appear in only one → might be relevant (keep them, lower rank)
+- Some records appear in BOTH lists  very likely relevant (boost them!)
+- Some appear in only one  might be relevant (keep them, lower rank)
 
 This is EXACTLY what Reciprocal Rank Fusion does.
 
@@ -26,13 +26,13 @@ Example:
   BM25 returns:          [Doc B (rank 1), Doc D (rank 2), Doc A (rank 3)]
 
   RRF scores:
-  Doc A: 1/(1+60) + 1/(3+60) = 0.0164 + 0.0159 = 0.0323  ← appears in BOTH!
-  Doc B: 1/(2+60) + 1/(1+60) = 0.0161 + 0.0164 = 0.0325  ← appears in BOTH!
-  Doc C: 1/(3+60) + 0          = 0.0159                     ← only in vector
-  Doc D: 0          + 1/(2+60) = 0.0161                     ← only in BM25
+  Doc A: 1/(1+60) + 1/(3+60) = 0.0164 + 0.0159 = 0.0323   appears in BOTH!
+  Doc B: 1/(2+60) + 1/(1+60) = 0.0161 + 0.0164 = 0.0325   appears in BOTH!
+  Doc C: 1/(3+60) + 0          = 0.0159                      only in vector
+  Doc D: 0          + 1/(2+60) = 0.0161                      only in BM25
 
   Final ranking: [Doc B, Doc A, Doc D, Doc C]
-  → Documents appearing in BOTH lists naturally rise to the top!
+   Documents appearing in BOTH lists naturally rise to the top!
 
 INTERVIEW TIP:
 Q: "How do you combine results from different retrieval methods?"
@@ -91,10 +91,10 @@ class HybridRetriever:
         # with a larger candidate pool
         fetch_k = min(top_k * 2, 50)  # Fetch up to 2x what we need
         
-        rprint(f"[dim]  🔍 Dense search (top {fetch_k})...[/dim]")
+        rprint(f"[dim]   Dense search (top {fetch_k})...[/dim]")
         dense_results = self.vector_store.search(query, top_k=fetch_k)
         
-        rprint(f"[dim]  📝 BM25 search (top {fetch_k})...[/dim]")
+        rprint(f"[dim]   BM25 search (top {fetch_k})...[/dim]")
         sparse_results = self.bm25_index.search(query, top_k=fetch_k)
         
         # --- Step 2: Apply Reciprocal Rank Fusion ---
@@ -105,7 +105,7 @@ class HybridRetriever:
         # --- Step 3: Return top_k results ---
         final = fused_results[:top_k]
         
-        rprint(f"[dim]  🔀 Hybrid results: {len(final)} chunks "
+        rprint(f"[dim]   Hybrid results: {len(final)} chunks "
                f"(from {len(dense_results)} dense + {len(sparse_results)} sparse)[/dim]")
         
         return final
@@ -126,7 +126,7 @@ class HybridRetriever:
         
         We use chunk_id as the key to identify the same chunk across lists.
         """
-        # Dictionary to accumulate scores: chunk_id → {data + score}
+        # Dictionary to accumulate scores: chunk_id  {data + score}
         score_map: dict[str, dict] = {}
         
         # Process dense (vector) results
@@ -182,7 +182,7 @@ class HybridRetriever:
 # Self-test
 # ============================================================
 if __name__ == "__main__":
-    rprint("\n[bold]🔀 Testing Hybrid Retriever[/bold]\n")
+    rprint("\n[bold] Testing Hybrid Retriever[/bold]\n")
     
     from rag.document_loader import load_directory
     from rag.chunker import RecursiveChunker
@@ -202,7 +202,7 @@ if __name__ == "__main__":
     retriever = HybridRetriever(vs, bm25)
     query = "VPN error E-4012 connection timed out"
     
-    rprint(f"\n[bold]🔍 Hybrid search: '{query}'[/bold]\n")
+    rprint(f"\n[bold] Hybrid search: '{query}'[/bold]\n")
     results = retriever.retrieve(query, top_k=5)
     
     for i, r in enumerate(results, 1):
@@ -211,3 +211,4 @@ if __name__ == "__main__":
         rprint(f"  Source: {r['source']}")
         rprint(f"  Content: {r['content'][:120]}...")
         rprint()
+

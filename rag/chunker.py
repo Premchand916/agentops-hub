@@ -1,5 +1,5 @@
-"""
-AgentOps Hub — Document Chunker
+﻿"""
+AgentOps Hub  Document Chunker
 =================================
 
 WHAT THIS DOES:
@@ -10,28 +10,28 @@ WHY CHUNKING IS CRITICAL:
 
 Imagine you're searching a 50-page IT manual for "how to reset VPN cache."
 Without chunking: The entire 50 pages get embedded as ONE vector.
-  → The vector represents the "average meaning" of everything.
-  → Search for "VPN cache" might not match because the vector is diluted.
+   The vector represents the "average meaning" of everything.
+   Search for "VPN cache" might not match because the vector is diluted.
 
 With chunking: The manual is split into 100 focused chunks of ~500 chars each.
-  → The chunk about VPN cache gets its OWN vector.
-  → Search for "VPN cache" matches that specific chunk perfectly.
+   The chunk about VPN cache gets its OWN vector.
+   Search for "VPN cache" matches that specific chunk perfectly.
 
 THE CHUNKING DILEMMA (this comes up in interviews):
-  - Chunks too SMALL → lose context ("Step 3" means nothing without Steps 1-2)
-  - Chunks too LARGE → dilute meaning (a 5000-char chunk about many topics matches poorly)
+  - Chunks too SMALL  lose context ("Step 3" means nothing without Steps 1-2)
+  - Chunks too LARGE  dilute meaning (a 5000-char chunk about many topics matches poorly)
   - The sweet spot is 500-1000 characters with 100-200 overlap
 
 WHY OVERLAP?
   Without overlap, a sentence at the boundary gets CUT IN HALF:
     Chunk 1: "...To reset VPN cache, go to Settings"
     Chunk 2: "> Advanced > Clear Cache in the VPN client."
-  → Neither chunk has the full instruction!
+   Neither chunk has the full instruction!
 
   With 200-char overlap:
     Chunk 1: "...To reset VPN cache, go to Settings > Advanced > Clear Cache"
     Chunk 2: "go to Settings > Advanced > Clear Cache in the VPN client."
-  → Both chunks have the complete instruction.
+   Both chunks have the complete instruction.
 
 INTERVIEW TIP:
 Q: "How do you choose chunk size for RAG?"
@@ -39,7 +39,7 @@ A: "It depends on the content type. For technical docs with step-by-step
    instructions, I use 800-1000 chars with 200 overlap to preserve procedure
    context. For Q&A or FAQ content, smaller chunks (400-600) work better
    because each Q&A is self-contained. I always validate by testing retrieval
-   quality — chunk size is a hyperparameter you tune, not guess."
+   quality  chunk size is a hyperparameter you tune, not guess."
 """
 
 from dataclasses import dataclass, field
@@ -75,7 +75,7 @@ class RecursiveChunker:
     HOW RECURSIVE CHUNKING WORKS:
     
     It tries to split on the largest semantic boundaries first:
-    1. First, try splitting on "\\n\\n" (paragraph breaks) — best quality
+    1. First, try splitting on "\\n\\n" (paragraph breaks)  best quality
     2. If chunks are still too big, split on "\\n" (line breaks)
     3. If still too big, split on ". " (sentence boundaries)
     4. Last resort: split on " " (word boundaries)
@@ -83,10 +83,10 @@ class RecursiveChunker:
     WHY RECURSIVE IS BETTER THAN FIXED-SIZE:
     
     Fixed-size (bad): Cut every 1000 characters regardless of content.
-      → "Step 5: Clear VPN ca" | "che: Go to Settings > ..."
+       "Step 5: Clear VPN ca" | "che: Go to Settings > ..."
       
     Recursive (good): Cut at paragraph/sentence boundaries.
-      → "Step 5: Clear VPN cache: Go to Settings > Advanced > Clear Cache"
+       "Step 5: Clear VPN cache: Go to Settings > Advanced > Clear Cache"
       
     The recursive approach RESPECTS the structure of the text.
     
@@ -117,9 +117,9 @@ class RecursiveChunker:
         
         # Separators in order of preference (try the best first)
         self.separators = separators or [
-            "\n\n",    # Paragraph breaks (best — preserves topic boundaries)
-            "\n",      # Line breaks (good — preserves list items, steps)
-            ". ",      # Sentences (decent — keeps complete thoughts)
+            "\n\n",    # Paragraph breaks (best  preserves topic boundaries)
+            "\n",      # Line breaks (good  preserves list items, steps)
+            ". ",      # Sentences (decent  keeps complete thoughts)
             ", ",      # Clauses (acceptable)
             " ",       # Words (last resort)
         ]
@@ -179,9 +179,9 @@ class RecursiveChunker:
                 all_chunks.extend(chunks)
             except Exception as e:
                 source = doc.metadata.get("file_name", "unknown")
-                rprint(f"  [red]❌ Chunking failed for {source}: {e}[/red]")
+                rprint(f"  [red] Chunking failed for {source}: {e}[/red]")
         
-        rprint(f"[cyan]✂️  Created {len(all_chunks)} chunks from {len(documents)} documents[/cyan]")
+        rprint(f"[cyan]  Created {len(all_chunks)} chunks from {len(documents)} documents[/cyan]")
         return all_chunks
     
     def _recursive_split(self, text: str, separators: list[str]) -> list[str]:
@@ -199,11 +199,11 @@ class RecursiveChunker:
         EXAMPLE with chunk_size=500:
         Text: "Paragraph A (200 chars)\\n\\nParagraph B (400 chars)\\n\\nParagraph C (300 chars)"
         
-        Step 1: Split on "\\n\\n" → ["Paragraph A", "Paragraph B", "Paragraph C"]
-        Step 2: Combine A+B = 600 chars → too big!
-        Step 3: Output A (200), start new chunk with B (400), add C → B+C = 700 → too big!
+        Step 1: Split on "\\n\\n"  ["Paragraph A", "Paragraph B", "Paragraph C"]
+        Step 2: Combine A+B = 600 chars  too big!
+        Step 3: Output A (200), start new chunk with B (400), add C  B+C = 700  too big!
         Step 4: Output B (400), output C (300)
-        Result: [A, B, C] — three clean chunks respecting paragraph boundaries
+        Result: [A, B, C]  three clean chunks respecting paragraph boundaries
         """
         final_chunks = []
         
@@ -228,10 +228,10 @@ class RecursiveChunker:
             )
             
             if len(test_chunk) <= self.chunk_size:
-                # Still fits — keep accumulating
+                # Still fits  keep accumulating
                 current_chunk = test_chunk
             else:
-                # Doesn't fit — save current chunk and start new one
+                # Doesn't fit  save current chunk and start new one
                 if current_chunk:
                     final_chunks.append(current_chunk)
                 
@@ -291,7 +291,7 @@ class RecursiveChunker:
 if __name__ == "__main__":
     from rag.document_loader import load_directory
     
-    rprint("\n[bold]✂️  Testing Document Chunker[/bold]\n")
+    rprint("\n[bold]  Testing Document Chunker[/bold]\n")
     
     # Load sample documents
     docs = load_directory("rag/documents")
@@ -302,7 +302,7 @@ if __name__ == "__main__":
         chunks = chunker.chunk_documents(docs)
         
         # Show sample
-        rprint(f"\n[bold]📋 Sample chunks:[/bold]")
+        rprint(f"\n[bold] Sample chunks:[/bold]")
         for chunk in chunks[:3]:
             rprint(f"\n  [yellow]--- {chunk.chunk_id} ---[/yellow]")
             rprint(f"  Size: {len(chunk.content)} chars")

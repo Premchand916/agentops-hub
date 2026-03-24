@@ -1,5 +1,5 @@
-"""
-AgentOps Hub — Agent State
+﻿"""
+AgentOps Hub  Agent State
 ============================
 
 WHAT THIS IS:
@@ -8,13 +8,13 @@ Every agent can READ from this state and WRITE to it.
 
 WHY STATE MATTERS (THE KEY INSIGHT):
 
-In a single chatbot, there's no state problem — user asks, bot answers.
+In a single chatbot, there's no state problem  user asks, bot answers.
 In a MULTI-AGENT system, agents need to share information:
 
   1. User says: "My VPN is broken and I need to submit a ticket"
-  2. Orchestrator reads the message → routes to IT_HELP
-  3. IT Help Agent reads the message + retrieves from RAG → writes answer
-  4. BUT the user also said "submit a ticket" → needs WORKFLOW agent too
+  2. Orchestrator reads the message  routes to IT_HELP
+  3. IT Help Agent reads the message + retrieves from RAG  writes answer
+  4. BUT the user also said "submit a ticket"  needs WORKFLOW agent too
   5. The state carries the FULL context between agents
 
 Without shared state, each agent would start from scratch.
@@ -75,7 +75,7 @@ class AgentState(TypedDict):
     target_agent: str  # "IT_HELP", "KNOWLEDGE", "TRIAGE", or "COMPLETE"
     
     # How confident is the orchestrator in its routing decision?
-    # If below threshold → route to TRIAGE instead
+    # If below threshold  route to TRIAGE instead
     routing_confidence: float
     
     # Why did the orchestrator choose this agent?
@@ -95,3 +95,4 @@ class AgentState(TypedDict):
     
     # Number of routing attempts (prevents infinite loops)
     routing_attempts: int
+

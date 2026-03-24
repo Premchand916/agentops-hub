@@ -1,5 +1,5 @@
-"""
-AgentOps Hub — Agents Package
+﻿"""
+AgentOps Hub  Agents Package
 
 Usage:
     from agents import AgentHub

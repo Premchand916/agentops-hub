@@ -1,0 +1,13 @@
+beautifulsoup4
+flashrank
+langchain-core
+langchain-ollama
+langgraph
+pydantic
+pydantic-settings
+pymupdf
+python-docx
+python-dotenv
+qdrant-client
+rank-bm25
+rich

@@ -1,10 +1,10 @@
-"""
-Tools package — tool definitions, simulated backends, and registry.
+﻿"""
+Tools package  tool definitions, simulated backends, and registry.
 
 Session 3 builds this in layers:
-- schemas.py    → Pydantic models (inputs, outputs, tool definitions)
-- backends.py   → Simulated services (tickets, monitoring, notifications)
-- registry.py   → Tool registry + executor (MCP-inspired)
+- schemas.py     Pydantic models (inputs, outputs, tool definitions)
+- backends.py    Simulated services (tickets, monitoring, notifications)
+- registry.py    Tool registry + executor (MCP-inspired)
 """
 
 from tools.backends import BackendServices, NotificationService, SystemMonitor, TicketStore

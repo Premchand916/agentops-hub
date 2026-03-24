@@ -3,3 +3,16 @@ Name: agentops-hub
 Version: 0.1.0
 Summary: Multi-agent AI operations assistant
 Requires-Python: >=3.12
+Requires-Dist: beautifulsoup4
+Requires-Dist: flashrank
+Requires-Dist: langchain-core
+Requires-Dist: langchain-ollama
+Requires-Dist: langgraph
+Requires-Dist: pydantic
+Requires-Dist: pydantic-settings
+Requires-Dist: pymupdf
+Requires-Dist: python-docx
+Requires-Dist: python-dotenv
+Requires-Dist: qdrant-client
+Requires-Dist: rank-bm25
+Requires-Dist: rich

@@ -1,14 +1,14 @@
-"""
-Tool Registry & Executor — MCP-inspired tool management layer.
+﻿"""
+Tool Registry & Executor  MCP-inspired tool management layer.
 
 This is the "equipment rack" in our hospital analogy. It:
 1. REGISTERS tools (what's available, what each does)
 2. EXPOSES schemas (so the LLM knows how to call them)
-3. EXECUTES tool calls (validates input → runs backend → returns output)
+3. EXECUTES tool calls (validates input  runs backend  returns output)
 
 Architecture:
-    Agent → "What tools do I have?" → Registry → [list of tool schemas]
-    Agent → "Call create_ticket with {...}" → Executor → Backend → Result
+    Agent  "What tools do I have?"  Registry  [list of tool schemas]
+    Agent  "Call create_ticket with {...}"  Executor  Backend  Result
 
 Why this pattern?
 - Agents don't know about backends directly (decoupled)
@@ -45,7 +45,7 @@ class ToolExecutionError(Exception):
     """Raised when a tool call fails.
     
     Wraps underlying errors with context about which tool
-    failed and why — much more debuggable than raw exceptions.
+    failed and why  much more debuggable than raw exceptions.
     """
 
     def __init__(self, tool_name: str, message: str) -> None:
@@ -64,8 +64,8 @@ class ToolRegistry:
     - How to use it (execute_tool)
     
     The registry owns the connection between:
-    - Tool definitions (schemas) — what the LLM sees
-    - Tool handlers (functions) — what actually runs
+    - Tool definitions (schemas)  what the LLM sees
+    - Tool handlers (functions)  what actually runs
     
     This separation is key: the LLM generates arguments based on
     the schema, and the registry validates + routes to the handler.
@@ -73,7 +73,7 @@ class ToolRegistry:
 
     def __init__(self, backends: BackendServices) -> None:
         self._backends = backends
-        # Maps tool name → (definition, handler function)
+        # Maps tool name  (definition, handler function)
         self._tools: dict[str, tuple[ToolDefinition, Callable]] = {}
         self._register_default_tools()
 
@@ -139,9 +139,9 @@ class ToolRegistry:
 
         logger.info(f"Registered {len(self._tools)} tools: {list(self._tools.keys())}")
 
-    # ──────────────────────────────────────────────
-    # Public API — what agents interact with
-    # ──────────────────────────────────────────────
+    # 
+    # Public API  what agents interact with
+    # 
 
     def register(self, definition: ToolDefinition, handler: Callable) -> None:
         """Register a new tool with its handler.
@@ -171,7 +171,7 @@ class ToolRegistry:
         This is what gets sent to the LLM for function calling.
         The LLM reads this schema and generates valid JSON arguments.
         
-        Returns format compatible with Gemini function calling:
+        Returns a format that works well for prompt-based tool calling:
         {
             "name": "create_ticket",
             "description": "Create a new IT support ticket...",
@@ -188,7 +188,7 @@ class ToolRegistry:
         }
 
     def get_all_tool_schemas(self) -> list[dict[str, Any]]:
-        """Get JSON Schemas for ALL tools — sent to LLM in one batch.
+        """Get JSON Schemas for ALL tools  sent to LLM in one batch.
         
         This is the complete "tool menu" the LLM sees when deciding
         which tool to call and how to fill its arguments.
@@ -239,7 +239,7 @@ class ToolRegistry:
             # and potentially self-correct
             error_details = []
             for err in e.errors():
-                field = " → ".join(str(loc) for loc in err["loc"])
+                field = "  ".join(str(loc) for loc in err["loc"])
                 error_details.append(f"  - {field}: {err['msg']}")
             error_msg = "Invalid arguments:\n" + "\n".join(error_details)
             logger.warning(f"Tool '{tool_name}' validation failed: {error_msg}")
@@ -268,7 +268,7 @@ class ToolRegistry:
         - Returns dicts instead of Pydantic models (easier for LLM context)
         - Always includes success/error status
         
-        This is what agents actually call — they need predictable
+        This is what agents actually call  they need predictable
         output format regardless of success or failure.
         """
         try:
@@ -315,10 +315,10 @@ class ToolRegistry:
 
                 # Include enum values if present
                 if "enum" in param_info:
-                    desc += f" — options: {param_info['enum']}"
+                    desc += f"  options: {param_info['enum']}"
                 elif "allOf" in param_info or "$ref" in param_info:
                     # Handle Pydantic v2 enum references
-                    desc += " — see enum values in schema"
+                    desc += "  see enum values in schema"
 
                 params.append(f"    - {param_name} {req}: {desc}")
 
@@ -330,3 +330,4 @@ class ToolRegistry:
             )
 
         return "\n".join(lines)
+

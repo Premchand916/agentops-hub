@@ -1,15 +1,15 @@
-"""
-Simulated Backends — In-memory services that mimic real operational tools.
+﻿"""
+Simulated Backends  In-memory services that mimic real operational tools.
 
 Think of these as "mock kitchens" for development:
-- TicketStore → simulates Jira/ServiceNow (stores tickets in a dict)
-- SystemMonitor → simulates PagerDuty/Datadog (returns fake health data)
-- NotificationService → simulates Slack/Email (logs messages)
+- TicketStore  simulates Jira/ServiceNow (stores tickets in a dict)
+- SystemMonitor  simulates PagerDuty/Datadog (returns fake health data)
+- NotificationService  simulates Slack/Email (logs messages)
 
 Why simulate?
 1. Build and test agent plumbing without external dependencies
 2. Predictable behavior for testing and evals (Session 4)
-3. Swap in real APIs later — the interface (schemas) stays the same
+3. Swap in real APIs later  the interface (schemas) stays the same
 
 Each backend class:
 - Accepts a validated Pydantic input model
@@ -44,7 +44,7 @@ logger = logging.getLogger(__name__)
 
 
 def _now() -> datetime:
-    """Current UTC time — single source of truth for timestamps."""
+    """Current UTC time  single source of truth for timestamps."""
     return datetime.now(timezone.utc)
 
 
@@ -55,9 +55,9 @@ def _random_id(prefix: str, length: int = 4) -> str:
     return f"{prefix}-{suffix}"
 
 
-# ──────────────────────────────────────────────
-# Ticket Store — simulates Jira / ServiceNow
-# ──────────────────────────────────────────────
+# 
+# Ticket Store  simulates Jira / ServiceNow
+# 
 
 class TicketStore:
     """In-memory ticket management system.
@@ -66,7 +66,7 @@ class TicketStore:
     Doctors (agents) create records, search them, and update them.
     
     In production, this would be replaced by a Jira API client,
-    ServiceNow connector, or any ITSM tool — but the method
+    ServiceNow connector, or any ITSM tool  but the method
     signatures stay identical.
     """
 
@@ -140,7 +140,7 @@ class TicketStore:
     def search_tickets(self, params: SearchTicketsInput) -> SearchTicketsResult:
         """Search tickets by keyword matching on title, description, and tags.
         
-        Simple substring matching — in production you'd use
+        Simple substring matching  in production you'd use
         Elasticsearch, Jira JQL, or similar.
         """
         query_lower = params.query.lower()
@@ -182,9 +182,9 @@ class TicketStore:
         return len(self._tickets)
 
 
-# ──────────────────────────────────────────────
-# System Monitor — simulates PagerDuty / Datadog
-# ──────────────────────────────────────────────
+# 
+# System Monitor  simulates PagerDuty / Datadog
+# 
 
 class SystemMonitor:
     """Simulated infrastructure monitoring dashboard.
@@ -192,10 +192,10 @@ class SystemMonitor:
     Hospital analogy: The vital signs monitor on each ward.
     Shows whether each "organ" (system) is healthy or failing.
     
-    In production → Datadog API, PagerDuty, AWS CloudWatch, etc.
+    In production  Datadog API, PagerDuty, AWS CloudWatch, etc.
     """
 
-    # Simulated system states — in production these come from real monitoring
+    # Simulated system states  in production these come from real monitoring
     _SYSTEMS: dict[str, dict] = {
         "vpn": {
             "status": SystemStatus.DEGRADED,
@@ -247,7 +247,7 @@ class SystemMonitor:
                 uptime_percent=info["uptime"],
             )
         else:
-            # Unknown system — return a helpful "not found" instead of crashing
+            # Unknown system  return a helpful "not found" instead of crashing
             known = ", ".join(sorted(self._SYSTEMS.keys()))
             result = SystemStatusResult(
                 system_name=params.system_name,
@@ -269,9 +269,9 @@ class SystemMonitor:
         return sorted(self._SYSTEMS.keys())
 
 
-# ──────────────────────────────────────────────
-# Notification Service — simulates Slack / Email
-# ──────────────────────────────────────────────
+# 
+# Notification Service  simulates Slack / Email
+# 
 
 class NotificationService:
     """Simulated notification delivery system.
@@ -279,7 +279,7 @@ class NotificationService:
     Hospital analogy: The intercom/paging system. When a doctor
     needs to alert a ward or call a specialist, they use this.
     
-    In production → Slack API, SendGrid, Microsoft Teams webhooks, etc.
+    In production  Slack API, SendGrid, Microsoft Teams webhooks, etc.
     """
 
     def __init__(self) -> None:
@@ -317,9 +317,9 @@ class NotificationService:
         return list(self._sent)
 
 
-# ──────────────────────────────────────────────
-# Singleton-style factory — one instance per backend
-# ──────────────────────────────────────────────
+# 
+# Singleton-style factory  one instance per backend
+# 
 
 class BackendServices:
     """Central access point for all simulated backends.
@@ -329,7 +329,7 @@ class BackendServices:
     - Easy to swap implementations (inject real clients later)
     - Agents get backends through one interface, not scattered globals
     
-    This is the Dependency Injection pattern — backends are "injected"
+    This is the Dependency Injection pattern  backends are "injected"
     into agents rather than agents creating their own connections.
     """
 
@@ -338,7 +338,7 @@ class BackendServices:
         self.monitor = SystemMonitor()
         self.notifications = NotificationService()
         logger.info(
-            "Backend services initialized — "
+            "Backend services initialized  "
             f"tickets: {self.tickets.total_tickets} seeded, "
             f"systems: {len(self.monitor.list_systems())} monitored"
         )
