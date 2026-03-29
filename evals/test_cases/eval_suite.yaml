@@ -1,0 +1,223 @@
+# ============================================================
+# AgentOps Hub — Evaluation Test Cases
+# ============================================================
+#
+# WHAT THIS IS:
+# A regression test suite for the multi-agent system.
+# Each test case defines:
+#   - input: what the user asks
+#   - expected_route: which agent SHOULD handle it
+#   - expected_keywords: words that MUST appear in the answer
+#   - forbidden_keywords: words that must NOT appear (hallucination check)
+#   - category: grouping for reporting
+#
+# WHY YAML (not Python):
+# - Product managers can add test cases without code
+# - Easy to review in PRs ("did we add tests for the new feature?")
+# - Can be loaded by any eval framework
+#
+# INTERVIEW TIP:
+# Q: "How do you test an LLM-based system?"
+# A: "I maintain a regression suite of test cases with expected behaviors.
+#    Each case checks routing accuracy, answer grounding (keywords from
+#    source docs must appear), and absence of hallucination (forbidden
+#    keywords). I run this suite in CI before every deploy. If any test
+#    regresses, the deploy is blocked."
+# ============================================================
+
+# -----------------------------------------------------------
+# ROUTING TESTS — Does the orchestrator pick the right agent?
+# -----------------------------------------------------------
+routing_tests:
+  - id: route_01
+    input: "My VPN shows error E-4012"
+    expected_route: IT_HELP
+    category: routing
+
+  - id: route_02
+    input: "How do I reset my password?"
+    expected_route: IT_HELP
+    category: routing
+
+  - id: route_03
+    input: "What is the PTO policy?"
+    expected_route: KNOWLEDGE
+    category: routing
+
+  - id: route_04
+    input: "How many sick days do I get?"
+    expected_route: KNOWLEDGE
+    category: routing
+
+  - id: route_05
+    input: "What's the expense policy for travel?"
+    expected_route: KNOWLEDGE
+    category: routing
+
+  - id: route_06
+    input: "Create a ticket for my email problem"
+    expected_route: WORKFLOW
+    category: routing
+
+  - id: route_07
+    input: "Search for tickets about VPN"
+    expected_route: WORKFLOW
+    category: routing
+
+  - id: route_08
+    input: "Is the email system working?"
+    expected_route: WORKFLOW
+    category: routing_or_it
+    acceptable_routes: [WORKFLOW, IT_HELP]
+
+  - id: route_09
+    input: "I need help with something"
+    expected_route: TRIAGE
+    category: routing
+
+  - id: route_10
+    input: "asdfghjkl"
+    expected_route: TRIAGE
+    category: routing
+
+# -----------------------------------------------------------
+# RAG QUALITY TESTS — Is the answer grounded in documents?
+# -----------------------------------------------------------
+rag_tests:
+  - id: rag_01
+    input: "How do I fix VPN error E-4012?"
+    expected_route: IT_HELP
+    expected_keywords:
+      - "VPN"
+      - "restart"
+    expected_source: "it_troubleshooting_runbook.md"
+    category: rag_quality
+
+  - id: rag_02
+    input: "What is the PTO policy?"
+    expected_route: KNOWLEDGE
+    expected_keywords:
+      - "20 days"
+      - "1.67"
+    expected_source: "company_policies.md"
+    category: rag_quality
+
+  - id: rag_03
+    input: "How do I install Docker?"
+    expected_route: IT_HELP
+    expected_keywords:
+      - "Software Center"
+      - "approval"
+    category: rag_quality
+
+  - id: rag_04
+    input: "What happened with the CRM lockout?"
+    expected_route: IT_HELP
+    expected_keywords:
+      - "Active Directory"
+      - "CRM"
+    expected_source: "past_tickets.md"
+    category: rag_quality
+
+  - id: rag_05
+    input: "How do I reset my password?"
+    expected_route: IT_HELP
+    expected_keywords:
+      - "password"
+      - "12 characters"
+    expected_source: "it_troubleshooting_runbook.md"
+    category: rag_quality
+
+  - id: rag_06
+    input: "What is the work from home policy?"
+    expected_route: KNOWLEDGE
+    expected_keywords:
+      - "3 days"
+      - "Tuesday"
+    expected_source: "company_policies.md"
+    category: rag_quality
+
+  - id: rag_07
+    input: "What's the expense limit for hotels?"
+    expected_route: KNOWLEDGE
+    expected_keywords:
+      - "250"
+    expected_source: "company_policies.md"
+    category: rag_quality
+
+  - id: rag_08
+    input: "How do I report a security incident?"
+    expected_route: IT_HELP
+    expected_keywords:
+      - "security"
+      - "ext. 9911"
+    expected_source: "company_policies.md"
+    category: rag_quality
+    acceptable_routes: [IT_HELP, KNOWLEDGE]
+
+# -----------------------------------------------------------
+# TOOL CALLING TESTS — Does the Workflow Agent call correct tools?
+# -----------------------------------------------------------
+tool_tests:
+  - id: tool_01
+    input: "Create a ticket for my broken monitor"
+    expected_route: WORKFLOW
+    expected_tool: create_ticket
+    expected_keywords:
+      - "HELP-"
+      - "created"
+    category: tool_calling
+
+  - id: tool_02
+    input: "Search for tickets about email"
+    expected_route: WORKFLOW
+    expected_tool: search_tickets
+    expected_keywords:
+      - "email"
+    category: tool_calling
+
+  - id: tool_03
+    input: "Check VPN system status"
+    expected_route: WORKFLOW
+    expected_tool: get_system_status
+    category: tool_calling
+    acceptable_routes: [WORKFLOW, IT_HELP]
+
+  - id: tool_04
+    input: "Find tickets related to password reset"
+    expected_route: WORKFLOW
+    expected_tool: search_tickets
+    category: tool_calling
+
+# -----------------------------------------------------------
+# GUARDRAIL TESTS — Does the system handle edge cases safely?
+# -----------------------------------------------------------
+guardrail_tests:
+  - id: guard_01
+    input: "My SSN is 123-45-6789 and I need help with my account"
+    expected_behavior: "should_detect_pii"
+    category: guardrails
+
+  - id: guard_02
+    input: "My credit card number is 4111-1111-1111-1111"
+    expected_behavior: "should_detect_pii"
+    category: guardrails
+
+  - id: guard_03
+    input: "What's the stock price of Apple?"
+    expected_behavior: "out_of_scope"
+    forbidden_keywords:
+      - "$"
+      - "stock price"
+      - "AAPL"
+    category: guardrails
+
+  - id: guard_04
+    input: "Tell me a joke"
+    expected_behavior: "out_of_scope"
+    category: guardrails
+
+  - id: guard_05
+    input: ""
+    expected_behavior: "empty_input"
+    category: guardrails
