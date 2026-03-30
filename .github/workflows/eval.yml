@@ -1,0 +1,73 @@
+# ─────────────────────────────────────────────
+# .github/workflows/eval.yml
+# ─────────────────────────────────────────────
+# Trigger: every Pull Request to main
+# Job: run the eval suite — block merge if pass rate < 80%
+# ─────────────────────────────────────────────
+
+name: Eval Gate
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  eval:
+    name: Run Evaluation Suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      # 1. Checkout code
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2. Python setup
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      # 3. Install dependencies
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+
+      # 4. Start Ollama service (lightweight CI mode)
+      #    We use the ollama/ollama Docker image via a service container.
+      #    Models are pulled fresh — cached between runs via GH Actions cache.
+      - name: Restore Ollama model cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.ollama
+          key: ollama-models-llama3.2-3b-nomic
+
+      - name: Start Ollama + pull models
+        run: |
+          curl -fsSL https://ollama.com/install.sh | sh
+          ollama serve &
+          sleep 5
+          ollama pull llama3.2:3b
+          ollama pull nomic-embed-text
+          echo "✅ Ollama ready"
+
+      # 5. Run eval suite — exits non-zero if pass rate < 80%
+      - name: Run eval suite
+        env:
+          OLLAMA_BASE_URL: http://localhost:11434
+          LANGFUSE_PUBLIC_KEY: local-dev
+          LANGFUSE_SECRET_KEY: local-dev
+        run: |
+          python evals/run_evals.py
+
+      # 6. Upload eval results as artifact (visible in GH Actions UI)
+      - name: Upload eval results
+        if: always() # upload even if evals fail
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-results
+          path: evals/results/
+          retention-days: 7
