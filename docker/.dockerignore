@@ -1,0 +1,40 @@
+# ── Python ─────────────────────────────────
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+*.pyo
+
+# ── Virtual env ─────────────────────────────
+venv/
+.venv/
+env/
+
+# ── Dev / IDE ───────────────────────────────
+.vscode/
+.idea/
+*.DS_Store
+Thumbs.db
+
+# ── Git ─────────────────────────────────────
+.git/
+.gitignore
+
+# ── Traces (runtime output, not source) ─────
+traces/*.jsonl
+
+# ── Model cache (downloaded at runtime) ─────
+model_cache/
+*.bin
+*.gguf
+
+# ── Test artifacts ───────────────────────────
+.pytest_cache/
+htmlcov/
+.coverage
+
+# ── Docs / extras ───────────────────────────
+*.md
+docs/

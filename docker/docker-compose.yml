@@ -1,0 +1,78 @@
+# ─────────────────────────────────────────────
+# AgentOps Hub — docker-compose.yml
+# ─────────────────────────────────────────────
+# Services:
+#   ollama   — local LLM server (llama3.2:3b + nomic-embed-text)
+#   qdrant   — vector database (persistent volume)
+#   app      — AgentOps Hub (waits for ollama to be healthy)
+# ─────────────────────────────────────────────
+
+version: "3.9"
+
+services:
+  # ── Ollama — local LLM server ──────────────
+  ollama:
+    image: ollama/ollama:latest
+    container_name: agentops-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama # persist downloaded models
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  # ── Qdrant — vector database ───────────────
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: agentops-qdrant
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage # persist vectors
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6333/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  # ── AgentOps Hub — main app ────────────────
+  app:
+    build:
+      context: .. # project root (one level up from docker/)
+      dockerfile: docker/Dockerfile
+    container_name: agentops-app
+    depends_on:
+      ollama:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+    environment:
+      # LLM provider — points to the ollama service above
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - QDRANT_URL=http://qdrant:6333
+
+      # Observability — optional Langfuse cloud
+      - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY:-local-dev}
+      - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY:-local-dev}
+      - LANGFUSE_HOST=${LANGFUSE_HOST:-http://localhost:3000}
+
+      # Other env vars passed through from .env
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    volumes:
+      - ./traces:/app/traces # persist local trace logs
+      - ../rag/documents:/app/rag/documents # mount docs (no rebuild needed to add docs)
+    stdin_open: true # keep stdin open for CLI
+    tty: true # allocate pseudo-TTY for interactive CLI
+    restart: unless-stopped
+
+# ── Named volumes ──────────────────────────────
+volumes:
+  ollama_data:
+  qdrant_data:
