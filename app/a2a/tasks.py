@@ -1,10 +1,11 @@
 # app/a2a/tasks.py
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from pydantic import BaseModel, Field
 from typing import Any
+from app.a2a.state_machine import InvalidTransitionError
 
 
 # ── Task state machine ─────────────────────────────────────────────────────
@@ -18,6 +19,7 @@ class TaskState(str, Enum):
 
 
 # ── Valid transitions (what state can go to what) ──────────────────────────
+
 VALID_TRANSITIONS: dict[TaskState, list[TaskState]] = {
     TaskState.SUBMITTED:      [TaskState.WORKING, TaskState.FAILED],
     TaskState.WORKING:        [TaskState.COMPLETED, TaskState.FAILED, TaskState.INPUT_REQUIRED],
@@ -31,14 +33,14 @@ VALID_TRANSITIONS: dict[TaskState, list[TaskState]] = {
 
 class TaskStatus(BaseModel):
     state: TaskState
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class Task(BaseModel):
     id: str
     status: TaskStatus
     result: Any = None
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 # ── In-memory task store ───────────────────────────────────────────────────
@@ -47,7 +49,7 @@ class TaskStore:
     def __init__(self):
         self._tasks: dict[str, Task] = {}
 
-    def create(self, task_id: str) -> Task:
+    async def create(self, task_id: str) -> Task:
         """Create task in SUBMITTED state. Idempotent — returns existing if id seen."""
         if task_id in self._tasks:
             return self._tasks[task_id]          # ← idempotency: same id = same task
@@ -62,7 +64,7 @@ class TaskStore:
     def get(self, task_id: str) -> Task | None:
         return self._tasks.get(task_id)
 
-    def transition(self, task_id: str, new_state: TaskState) -> Task:
+    async def transition(self, task_id: str, new_state: TaskState) -> Task:
         """Move task to new state. Raises if transition is invalid."""
         task = self._tasks.get(task_id)
         if not task:
@@ -72,15 +74,12 @@ class TaskStore:
         allowed = VALID_TRANSITIONS[current]
 
         if new_state not in allowed:
-            raise ValueError(
-                f"Invalid transition: {current} → {new_state}. "
-                f"Allowed: {[s.value for s in allowed]}"
-            )
+            raise InvalidTransitionError(current, new_state)
 
         task.status = TaskStatus(state=new_state)
         return task
 
-    def set_result(self, task_id: str, result: Any) -> Task:
+    async def set_result(self, task_id: str, result: Any) -> Task:
         task = self._tasks[task_id]
         task.result = result
         return task
