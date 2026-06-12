@@ -36,7 +36,13 @@ jobs:
           pip install -r requirements.txt
           pip install -e .
 
-      # 4. Start Ollama service (lightweight CI mode)
+      # 4. A2A compliance tests — fast, no Ollama required
+      - name: A2A protocol compliance tests
+        run: |
+          pip install pytest pytest-asyncio "python-jose[cryptography]" sse-starlette
+          python -m pytest tests/a2a_compliance/ -v --tb=short
+
+      # 6. Start Ollama service (lightweight CI mode)
       #    We use the ollama/ollama Docker image via a service container.
       #    Models are pulled fresh — cached between runs via GH Actions cache.
       - name: Restore Ollama model cache
@@ -54,7 +60,7 @@ jobs:
           ollama pull nomic-embed-text
           echo "✅ Ollama ready"
 
-      # 5. Run eval suite — exits non-zero if pass rate < 80%
+      # 7. Run eval suite — exits non-zero if pass rate < 80%
       - name: Run eval suite
         env:
           OLLAMA_BASE_URL: http://localhost:11434
@@ -63,7 +69,7 @@ jobs:
         run: |
           python evals/run_evals.py
 
-      # 6. Upload eval results as artifact (visible in GH Actions UI)
+      # 8. Upload eval results as artifact (visible in GH Actions UI)
       - name: Upload eval results
         if: always() # upload even if evals fail
         uses: actions/upload-artifact@v4

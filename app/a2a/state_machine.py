@@ -4,19 +4,21 @@ from enum import Enum
 
 
 class TaskState(str, Enum):
-    SUBMITTED = "submitted"
-    WORKING = "working"
+    SUBMITTED      = "submitted"
+    WORKING        = "working"
     INPUT_REQUIRED = "input-required"
-    COMPLETED = "completed"
-    FAILED = "failed"
+    COMPLETED      = "completed"
+    FAILED         = "failed"
+    WAITING        = "waiting"   # HITL: paused awaiting human approval
 
 
 # Rule book — every valid transition explicitly listed
 # Anything NOT in this table = invalid = rejected
 VALID_TRANSITIONS: dict[TaskState, set[TaskState]] = {
-    TaskState.SUBMITTED:       {TaskState.WORKING, TaskState.FAILED},
+    TaskState.SUBMITTED:       {TaskState.WORKING, TaskState.FAILED, TaskState.WAITING},
     TaskState.WORKING:         {TaskState.COMPLETED, TaskState.FAILED, TaskState.INPUT_REQUIRED},
     TaskState.INPUT_REQUIRED:  {TaskState.WORKING, TaskState.FAILED},
+    TaskState.WAITING:         {TaskState.WORKING, TaskState.FAILED},
     TaskState.COMPLETED:       set(),   # terminal — no exits
     TaskState.FAILED:          set(),   # terminal — no exits
 }

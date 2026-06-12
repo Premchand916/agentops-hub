@@ -3,7 +3,10 @@
 from pydantic import BaseModel, Field
 from typing import Any
 import asyncio
-
+from app.a2a.tasks import task_store, TaskState
+from app.a2a.state_machine import InvalidTransitionError
+from app.a2a.webhooks import webhook_dispatcher
+from app.a2a.policy import policy_engine, record_hitl_event
 
 # ── Global AgentHub instance ───────────────────────────────────────────────
 _agent_hub = None
@@ -103,58 +106,82 @@ async def jsonrpc_router(raw: dict[str, Any]) -> JSONRPCResponse | None:
 
 
 async def _handle_tasks_send(request: JSONRPCRequest) -> JSONRPCResponse | None:
-    """Handle tasks/send method: ingest a task and return result."""
-    try:
-        params = request.params
-        task_id = params.get("id")
-        message_obj = params.get("message", {})
-        
-        # Extract text from message parts
-        parts = message_obj.get("parts", [])
-        text = ""
-        for part in parts:
-            if isinstance(part, dict) and "text" in part:
-                text += part["text"]
-        
-        hub = get_agent_hub()
-        
-        # Ensure hub is ready (ingest documents if needed)
-        if not hub._is_ready:
-            # For now, ingest from default location
-            try:
-                from pathlib import Path
-                doc_path = Path(__file__).parent.parent.parent / "rag" / "Documents"
-                if doc_path.exists():
-                    hub.ingest(str(doc_path))
-            except Exception:
-                pass
-        
-        # Run the chat through AgentHub
-        result = await asyncio.to_thread(hub.chat, text)
-        
-        # Format response
-        task_result = {
-            "id": task_id,
-            "status": {
-                "state": "completed",
-                "result": result
-            }
-        }
-        
+    params = request.params
+    task_id = params.get("id")
+
+    if not task_id:
+        if request.id is not None:
+            return error_response(request.id, ErrorCode.INVALID_PARAMS, "Missing task id")
+        return None
+
+    # 1. Create task — idempotent, safe for duplicate task_ids
+    await task_store.create(task_id)
+
+    # 2. Extract text from message parts
+    parts = params.get("message", {}).get("parts", [])
+    text = "".join(p.get("text", "") for p in parts if isinstance(p, dict))
+
+    # 3. HITL policy check — block destructive/privileged requests before working
+    decision = policy_engine.evaluate(text)
+    if decision.requires_approval:
+        policy_engine.store_pending(task_id, text)
+        await task_store.transition(task_id, TaskState.WAITING)
+        record_hitl_event(task_id, "hitl.required", rule_id=decision.rule_id, reason=decision.reason)
         if request.id is not None:
             return JSONRPCResponse(
                 id=request.id,
-                result=task_result
-            )
-        return None  # notification
-    except Exception as e:
-        if request.id is not None:
-            return error_response(
-                request.id,
-                ErrorCode.INTERNAL_ERROR,
-                f"Error processing task: {str(e)}"
+                result={
+                    "id": task_id,
+                    "status": {"state": "waiting"},
+                    "approval_required": True,
+                    "rule_id": decision.rule_id,
+                    "reason": decision.reason,
+                },
             )
         return None
+
+    # 4. submitted → working
+    await task_store.transition(task_id, TaskState.WORKING)
+    await webhook_dispatcher.notify(task_id, {"id": task_id, "status": {"state": "working"}})
+
+    hub = get_agent_hub()
+    if not hub._is_ready:
+        try:
+            from pathlib import Path
+            doc_path = Path(__file__).parent.parent.parent / "rag" / "Documents"
+            if doc_path.exists():
+                hub.ingest(str(doc_path))
+        except Exception:
+            pass
+
+    # 4. Run agent — on failure, transition to failed
+    try:
+        result = await asyncio.to_thread(hub.chat, text)
+        await task_store.set_result(task_id, result)
+        await task_store.transition(task_id, TaskState.COMPLETED)  # working → completed
+        await webhook_dispatcher.notify(task_id, {"id": task_id, "status": {"state": "completed"}, "result": result})
+    except Exception as e:
+        await task_store.transition(task_id, TaskState.FAILED)     # working → failed
+        await webhook_dispatcher.notify(task_id, {"id": task_id, "status": {"state": "failed"}})
+        if request.id is not None:
+            return error_response(request.id, ErrorCode.INTERNAL_ERROR, str(e))
+        return None
+
+    # 5. Return actual task state — not hardcoded
+    task = task_store.get(task_id)
+    if request.id is not None:
+        return JSONRPCResponse(
+            id=request.id,
+            result={
+                "id": task_id,
+                "status": {
+                    "state": task.status.state.value,
+                    "updated_at": task.status.updated_at.isoformat(),
+                },
+                "result": result,
+            }
+        )
+    return None
 
 
 async def _handle_tasks_cancel(request: JSONRPCRequest) -> JSONRPCResponse | None:

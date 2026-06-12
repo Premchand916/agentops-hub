@@ -28,3 +28,4 @@ agentops-hub = "app.cli:main"
 
 [tool.setuptools.packages.find]
 include = ["agents*", "rag*", "mcp_servers*", "evals*", "observability*", "app*", "config*", "scripts*", "tools*"]
+

@@ -34,8 +34,8 @@ def get_agent_card() -> AgentCard:
         default_input_modes=["text"],
         default_output_modes=["text"],
         capabilities=AgentCapabilities(
-            streaming=True,        # Session 4 adds this
-            push_notifications=False  # Session 5 adds this
+            streaming=True,
+            push_notifications=True,
         ),
         skills=[
             Skill(

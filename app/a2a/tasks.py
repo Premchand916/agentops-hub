@@ -16,14 +16,16 @@ class TaskState(str, Enum):
     INPUT_REQUIRED  = "input-required"
     COMPLETED       = "completed"
     FAILED          = "failed"
+    WAITING         = "waiting"   # HITL: paused awaiting human approval
 
 
 # ── Valid transitions (what state can go to what) ──────────────────────────
 
 VALID_TRANSITIONS: dict[TaskState, list[TaskState]] = {
-    TaskState.SUBMITTED:      [TaskState.WORKING, TaskState.FAILED],
+    TaskState.SUBMITTED:      [TaskState.WORKING, TaskState.FAILED, TaskState.WAITING],
     TaskState.WORKING:        [TaskState.COMPLETED, TaskState.FAILED, TaskState.INPUT_REQUIRED],
     TaskState.INPUT_REQUIRED: [TaskState.WORKING, TaskState.FAILED],
+    TaskState.WAITING:        [TaskState.WORKING, TaskState.FAILED],
     TaskState.COMPLETED:      [],   # terminal — no exits
     TaskState.FAILED:         [],   # terminal — no exits
 }
