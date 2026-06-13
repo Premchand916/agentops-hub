@@ -15,7 +15,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 # 
@@ -208,5 +208,4 @@ class ToolDefinition(BaseModel):
     # We store the class itself, not an instance  we'll use it
     # to validate inputs and generate JSON Schema for the LLM.
 
-    class Config:
-        arbitrary_types_allowed = True  # Needed to store type references
+    model_config = ConfigDict(arbitrary_types_allowed=True)  # Needed to store type references

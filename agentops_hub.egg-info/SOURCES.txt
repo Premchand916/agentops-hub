@@ -1,3 +1,4 @@
+README.md
 pyproject.toml
 agentops_hub.egg-info/PKG-INFO
 agentops_hub.egg-info/SOURCES.txt
@@ -12,10 +13,16 @@ agents/specialists.py
 agents/state.py
 agents/workflow.py
 app/__init__.py
+app/chainlit_app.py
 app/cli.py
 config/__init__.py
 config/llm_factory.py
 config/settings.py
+evals/__init__.py
+evals/guardrails.py
+evals/run_evals.py
+observability/__init__.py
+observability/tracer.py
 rag/__init__.py
 rag/bm25_index.py
 rag/chunker.py
@@ -24,6 +31,7 @@ rag/rag_chain.py
 rag/reranker.py
 rag/retriever.py
 rag/vector_store.py
+tests/test_regressions.py
 tools/__init__.py
 tools/backends.py
 tools/registry.py

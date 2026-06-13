@@ -92,7 +92,8 @@ class OrchestratorAgent:
 
         knowledge_keywords = (
             "policy", "policies", "procedure", "procedures", "handbook", "documentation",
-            "runbook", "wiki", "pto", "leave", "vacation", "benefits"
+            "runbook", "wiki", "pto", "leave", "vacation", "benefits",
+            "expense", "expenses", "reimbursement", "travel", "hotel", "per diem", "sick"
         )
         if any(keyword in text for keyword in knowledge_keywords):
             return {
@@ -103,7 +104,8 @@ class OrchestratorAgent:
 
         technical_keywords = (
             "vpn", "password", "wifi", "network", "login", "log in", "email",
-            "outlook", "install", "error", "laptop", "printer", "access", "docker"
+            "outlook", "install", "error", "laptop", "printer", "access", "docker",
+            "security", "locked out", "lockout", "locked"
         )
         if any(keyword in text for keyword in technical_keywords):
             return {
